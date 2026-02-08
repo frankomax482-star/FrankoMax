@@ -133,7 +133,7 @@ def format_daily(city_label: str, daily: dict, want_days: int, real_days: int) -
         weather_code = d["weathercode"][i]
         # Иконка погоды
         weather_icon = f"https://open-meteo.com/assets/icons/{weather_code}.svg"
-        lines.append(f"{date}: {tmin}…{tmax}°C, осадки {pr} мм, ветер до {wind} м/с\n![icon]({weather_icon})")
+        lines.append(f"{date}: {tmin}…{tmax}°C, осадки {pr} мм, ветер до {wind} м/с")
 
     return "\n".join(lines)
 
@@ -315,7 +315,14 @@ async def send_weather(m: types.Message, want_days: int):
     # реальное количество дней (Open-Meteo ограничит до 16)
     real_days = min(want_days, 16)
     text = format_daily(cur["name"], data, want_days=want_days, real_days=real_days)
-    await m.answer(text)
+    
+    # Отправляем иконки как изображения
+    for i in range(real_days):
+        weather_code = data["daily"]["weathercode"][i]
+        weather_icon = f"https://open-meteo.com/assets/icons/{weather_code}.svg"
+        await m.answer(text, reply_markup=types.InlineKeyboardMarkup().add(
+            types.InlineKeyboardButton(text="🖼️ Погода", url=weather_icon)
+        ))
 
 @dp.message(F.text == "🗓 Погода на неделю")
 async def week(m: types.Message):
@@ -333,6 +340,10 @@ async def ask_location(m: types.Message):
 
 async def main():
     await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
 
 if __name__ == "__main__":
     asyncio.run(main())
